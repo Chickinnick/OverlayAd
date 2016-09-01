@@ -41,11 +41,11 @@ public class Utils {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
+
 		// Calculate new width of the bitmap based on the width of the container
-		int bitmapNewWidth = (bmap.getWidth()*containerWidth)/containerHeight;   
-		
-		// Produce clipping mask on the canvas and draw the bitmap 
+		int bitmapNewWidth = (bmap.getWidth()*containerWidth)/containerHeight;
+
+		// Produce clipping mask on the canvas and draw the bitmap
 		Bitmap targetBitmap = Bitmap.createBitmap(bitmapNewWidth, bmap.getHeight(), bmap.getConfig());
 		Canvas canvas = new Canvas(targetBitmap);
 		Path path = new Path();

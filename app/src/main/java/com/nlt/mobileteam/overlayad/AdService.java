@@ -20,14 +20,9 @@ import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.animation.AnimationSet;
 import android.view.animation.ScaleAnimation;
-import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
-import android.widget.TextView;
 
-
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -49,17 +44,8 @@ public class AdService extends Service
 	private WindowManager.LayoutParams 	mRootLayoutParams;		// Parameters of the root layout
 	private RelativeLayout 				mRootLayout;			// Root layout
 	private RelativeLayout 				mContentContainerLayout;// Contains everything other than buttons and song info
-	private RelativeLayout 				mLogoLayout;			// Contains Cpotify logo
 	private RelativeLayout 				mAlbumCoverLayout;		// Contains album cover of the active song
-	private RelativeLayout 				mAlbumCoverHelperLayout;// Contains cover of the previous song. This helps with fade animations.
-	private LinearLayout 				mPlayerButtonsLayout;	// Contains playback buttons
-	private LinearLayout 				mSongInfoLayout;		// Contains Text information on the current song
 
-	// Widgets
-	private ImageButton mPlaySongButton;
-	private ImageButton mPauseSongButton;
-	private TextView mSongTitleView;
-	private TextView mSingerView;
 
 	// Variables that control drag
 	private int mStartDragX;
@@ -92,17 +78,9 @@ public class AdService extends Service
 		mContentContainerLayout = (RelativeLayout) mRootLayout.findViewById(R.id.content_container);
 		mContentContainerLayout.setOnTouchListener(new TrayTouchListener());
 
-		mLogoLayout = (RelativeLayout) mRootLayout.findViewById(R.id.logo_layout);
 		mAlbumCoverLayout = (RelativeLayout) mRootLayout.findViewById(R.id.cover_layout);
-		mAlbumCoverHelperLayout = (RelativeLayout) mRootLayout.findViewById(R.id.cover_helper_layout);
 
-		mPlayerButtonsLayout = (LinearLayout) LayoutInflater.from(this).
-				inflate(R.layout.viewgroup_player_buttons, null);
-		mRootLayout.addView(mPlayerButtonsLayout);
 
-		mSongInfoLayout = (LinearLayout) LayoutInflater.from(this).
-				inflate(R.layout.viewgroup_song_info, null);
-		mRootLayout.addView(mSongInfoLayout);
 
 		/*mRootLayoutParams = new WindowManager.LayoutParams(
 				Utils.dpToPixels(TRAY_DIM_X_DP, getResources()),
@@ -125,10 +103,6 @@ public class AdService extends Service
 		mRootLayoutParams.gravity = Gravity.TOP | Gravity.LEFT;
 		mWindowManager.addView(mRootLayout, mRootLayoutParams);
 
-		mPlaySongButton = (ImageButton) mPlayerButtonsLayout.findViewById(R.id.button_play);
-		mPauseSongButton = (ImageButton) mPlayerButtonsLayout.findViewById(R.id.button_pause);
-		mSongTitleView = (TextView) mSongInfoLayout.findViewById(R.id.song_name);
-		mSingerView = (TextView) mSongInfoLayout.findViewById(R.id.singer_name);
 
 		// Post these actions at the end of looper message queue so that the layout is
 		// fully inflated once these functions execute
@@ -143,18 +117,11 @@ public class AdService extends Service
 
 				// Setup background spotify logo
 				is = getResources().openRawResource(R.drawable.spot_bg);
-				int containerNewWidth = (TRAY_CROP_FRACTION-1)*mLogoLayout.getHeight()/TRAY_CROP_FRACTION;
-				bmap = Utils.loadMaskedBitmap(is, mLogoLayout.getHeight(), containerNewWidth);
-				params = (RelativeLayout.LayoutParams) mLogoLayout.getLayoutParams();
-				params.width = (bmap.getWidth() * mLogoLayout.getHeight()) / bmap.getHeight();
-				params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT,0);
-				mLogoLayout.setLayoutParams(params);
-				mLogoLayout.requestLayout();
-				mLogoLayout.setBackgroundDrawable(new BitmapDrawable(getResources(), bmap));
+				int containerNewWidth = (TRAY_CROP_FRACTION-1)* 300 /TRAY_CROP_FRACTION;
 
 				// Setup background album cover
 				is=null;
-					is =getResources().openRawResource(R.drawable.spot_bg);
+					is =getResources().openRawResource(R.drawable.raw_ad);
 
 				bmap = Utils.loadMaskedBitmap(is, mAlbumCoverLayout.getHeight(), containerNewWidth);
 				params = (RelativeLayout.LayoutParams) mAlbumCoverLayout.getLayoutParams();
@@ -162,36 +129,12 @@ public class AdService extends Service
 				params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT,0);
 				mAlbumCoverLayout.setLayoutParams(params);
 				mAlbumCoverLayout.requestLayout();
-				mAlbumCoverHelperLayout.setLayoutParams(params);
-				mAlbumCoverHelperLayout.requestLayout();
 				mAlbumCoverLayout.setBackgroundDrawable(new BitmapDrawable(getResources(), bmap));
 
-				// Setup playback buttons
-				params = new RelativeLayout.LayoutParams(
-						RelativeLayout.LayoutParams.MATCH_PARENT,
-						Utils.dpToPixels(BUTTONS_DIM_Y_DP, getResources()));
-				params.addRule(RelativeLayout.ALIGN_RIGHT, R.id.tray_opener);
-				params.addRule(RelativeLayout.ALIGN_PARENT_TOP);
-				params.leftMargin = mRootLayout.getWidth()/TRAY_HIDDEN_FRACTION;
-				mRootLayout.updateViewLayout(mPlayerButtonsLayout, params);
-
-				// setup song info views
-				params = new RelativeLayout.LayoutParams(
-						RelativeLayout.LayoutParams.MATCH_PARENT,
-						RelativeLayout.LayoutParams.WRAP_CONTENT);
-				params.addRule(RelativeLayout.ALIGN_RIGHT, R.id.tray_opener);
-				params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
-				int marg = Utils.dpToPixels(5, getResources());
-				params.setMargins(
-						marg/2 + mRootLayout.getWidth()/TRAY_HIDDEN_FRACTION,
-						marg,
-						marg*3,
-						marg);
-				mRootLayout.updateViewLayout(mSongInfoLayout, params);
 
 
 				// Setup the root layout
-				mRootLayoutParams.x = -mLogoLayout.getLayoutParams().width;
+				mRootLayoutParams.x = 300;
 				mRootLayoutParams.y = (getApplicationContext().getResources().getDisplayMetrics().heightPixels-mRootLayout.getHeight()) / 2;
 				mWindowManager.updateViewLayout(mRootLayout, mRootLayoutParams);
 
@@ -213,7 +156,7 @@ public class AdService extends Service
 		if (mIsTrayOpen)
 			mRootLayoutParams.x = -mRootLayout.getWidth()/TRAY_HIDDEN_FRACTION;
 		else
-			mRootLayoutParams.x = -mLogoLayout.getWidth();
+			mRootLayoutParams.x = 300 / 2;
 		mRootLayoutParams.y = (getResources().getDisplayMetrics().heightPixels-mRootLayout.getHeight()) / 2;
 		mWindowManager.updateViewLayout(mRootLayout, mRootLayoutParams);
 		animateButtons();
@@ -334,7 +277,7 @@ public class AdService extends Service
 			// Setup destination coordinates based on the tray state.
 			super();
 			if (!mIsTrayOpen){
-				mDestX = -mLogoLayout.getWidth();
+				mDestX = -300;
 			}else{
 				mDestX = -mRootLayout.getWidth()/TRAY_HIDDEN_FRACTION;
 			}
@@ -384,8 +327,8 @@ public class AdService extends Service
 		if (mRootLayoutParams.x < -mRootLayout.getWidth()/TRAY_HIDDEN_FRACTION){
 
 			// Scale the distance between open and close states to 0-1.
-			float relativeDistance = (mRootLayoutParams.x + mLogoLayout.getWidth())/(float)
-					(-mRootLayout.getWidth()/TRAY_HIDDEN_FRACTION + mLogoLayout.getWidth());
+			float relativeDistance = (mRootLayoutParams.x + 300)/(float)
+					(-mRootLayout.getWidth()/TRAY_HIDDEN_FRACTION + 300);
 
 			// Limit it to 0-1 if it goes beyond 0-1 for any reason.
 			relativeDistance=Math.max(relativeDistance, 0);
@@ -407,15 +350,12 @@ public class AdService extends Service
 			animations.addAnimation(animationScale);
 
 			// Play the animations
-			mPlayerButtonsLayout.startAnimation(animations);
-			mSongInfoLayout.startAnimation(animations);
 			mAlbumCoverLayout.startAnimation(animationAlpha);
 		}else{
 
 			// Clear all animations if the tray is being dragged - that is, when it is beyond the
 			// normal open state.
-			mPlayerButtonsLayout.clearAnimation();
-			mSongInfoLayout.clearAnimation();
+
 			mAlbumCoverLayout.clearAnimation();
 		}
 	}
