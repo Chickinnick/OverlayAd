@@ -420,40 +420,6 @@ public class AdService extends Service
 		}
 	}
 
-	// Load new album cover image
-	private void changeSongDisplayInfo(){
-
-		InputStream is=null;
-
-			is = getResources().openRawResource(R.drawable.spot_bg);;
-
-
-		// Load new bitmap
-		Bitmap bmap = Utils.loadMaskedBitmap(is, mAlbumCoverLayout.getHeight(), mAlbumCoverLayout.getWidth());
-
-		// Change backgrounds
-		mAlbumCoverHelperLayout.setBackgroundDrawable(mAlbumCoverLayout.getBackground());
-		mAlbumCoverLayout.setBackgroundDrawable(new BitmapDrawable(getResources(), bmap));
-
-		// Animate the two layouts in order to achieve the fade in/fade out effect.
-		// First normalise the distance between open and closed states (0-1)
-		float relativeDistance = (mRootLayoutParams.x + mLogoLayout.getWidth())/(float)
-				(-mRootLayout.getWidth()/TRAY_HIDDEN_FRACTION + mLogoLayout.getWidth());
-		relativeDistance=Math.max(relativeDistance, 0);
-		relativeDistance=Math.min(relativeDistance, 1);
-
-		// Then use it to set final alpha in the animation.
-		Animation fadeOutAnim = new AlphaAnimation(relativeDistance,0.f);
-		fadeOutAnim.setFillAfter(true);
-		fadeOutAnim.setDuration(1000);
-		Animation fadeInAnim = new AlphaAnimation(0.f,relativeDistance);
-		fadeInAnim.setFillAfter(true);
-		fadeInAnim.setDuration(1000);
-		mAlbumCoverHelperLayout.startAnimation(fadeOutAnim);
-		mAlbumCoverLayout.startAnimation(fadeInAnim);
-
-		// Set new song info
-	}
 
 
 
