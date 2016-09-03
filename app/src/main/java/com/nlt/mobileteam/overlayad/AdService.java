@@ -4,365 +4,108 @@ import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
-import android.content.res.Configuration;
-import android.graphics.Bitmap;
 import android.graphics.PixelFormat;
-import android.graphics.drawable.BitmapDrawable;
-import android.os.Handler;
 import android.os.IBinder;
+import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
-import android.view.View.OnTouchListener;
+import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.view.animation.AlphaAnimation;
-import android.view.animation.Animation;
-import android.view.animation.AnimationSet;
-import android.view.animation.ScaleAnimation;
-import android.widget.LinearLayout;
+import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
-import java.io.InputStream;
-import java.util.Timer;
-import java.util.TimerTask;
+public class AdService extends Service {
+    private WindowManager mWindowManager;            // Reference to the window
+    private WindowManager.LayoutParams mRootLayoutParams;        // Parameters of the root layout
+    private RelativeLayout mRootLayout;            // Root layout
 
-public class AdService extends Service
-		 {
-
-	//
-	private static final int TRAY_HIDDEN_FRACTION 			= 6; 	// Controls fraction of the tray hidden when open
-	private static final int TRAY_MOVEMENT_REGION_FRACTION 	= 6;	// Controls fraction of y-axis on screen within which the tray stays.
-	private static final int TRAY_CROP_FRACTION 			= 12;	// Controls fraction of the tray chipped at the right end.
-	private static final int ANIMATION_FRAME_RATE 			= 30;	// Animation frame rate per second.
-	private static final int TRAY_DIM_X_DP 					= 170;	// Width of the tray in dps
-	private static final int TRAY_DIM_Y_DP 					= 160; 	// Height of the tray in dps
-	private static final int BUTTONS_DIM_Y_DP 				= 27;	// Height of the buttons in dps
-
-	// Layout containers for various widgets
-	private WindowManager 				mWindowManager;			// Reference to the window
-	private WindowManager.LayoutParams 	mRootLayoutParams;		// Parameters of the root layout
-	private RelativeLayout 				mRootLayout;			// Root layout
-	private RelativeLayout 				mContentContainerLayout;// Contains everything other than buttons and song info
-	private RelativeLayout 				mAlbumCoverLayout;		// Contains album cover of the active song
+    private ImageView imageView;
 
 
-	// Variables that control drag
-	private int mStartDragX;
-	//private int mStartDragY; // Unused as yet
-	private int mPrevDragX;
-	private int mPrevDragY;
+    @Override
+    public IBinder onBind(Intent intent) {
 
-	private boolean mIsTrayOpen = true;
+        return null;
+    }
 
-	// Controls for animations
-	private Timer 					mTrayAnimationTimer;
-	private TrayAnimationTimerTask 	mTrayTimerTask;
-	private Handler 				mAnimationHandler = new Handler();
+    @Override
+    public void onCreate() {
+        mWindowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        mWindowManager.getDefaultDisplay().getMetrics(displayMetrics);
+        mRootLayout = (RelativeLayout) LayoutInflater.from(this).
+                inflate(R.layout.service_player, null);
+
+        imageView = (ImageView) mRootLayout.findViewById(R.id.cover_layout);
+        imageView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                stopSelf();
+            }
+        });
 
 
-	@Override
-	public IBinder onBind(Intent intent) {
-		// Not used
-		return null;
-	}
+        mRootLayoutParams = new WindowManager.LayoutParams(
+                WindowManager.LayoutParams.TYPE_SYSTEM_OVERLAY,
 
-	@Override
-	public void onCreate() {
+                WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED,
 
-		// Get references to all the views and add them to root view as needed.
-		mWindowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
-
-		mRootLayout = (RelativeLayout) LayoutInflater.from(this).
-				inflate(R.layout.service_player, null);
-		mContentContainerLayout = (RelativeLayout) mRootLayout.findViewById(R.id.content_container);
-		mContentContainerLayout.setOnTouchListener(new TrayTouchListener());
-
-		mAlbumCoverLayout = (RelativeLayout) mRootLayout.findViewById(R.id.cover_layout);
-
+                PixelFormat.TRANSLUCENT);
 
 
 		/*mRootLayoutParams = new WindowManager.LayoutParams(
-				Utils.dpToPixels(TRAY_DIM_X_DP, getResources()),
-				Utils.dpToPixels(TRAY_DIM_Y_DP, getResources()),
-				WindowManager.LayoutParams.TYPE_PHONE,
-				WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
-				| WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
-				PixelFormat.TRANSLUCENT);
-*/
-		mRootLayoutParams = new WindowManager.LayoutParams(
-				Utils.dpToPixels(TRAY_DIM_X_DP, getResources()),
-				Utils.dpToPixels(TRAY_DIM_Y_DP, getResources()),
-				WindowManager.LayoutParams.TYPE_SYSTEM_OVERLAY,
-				WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
-						| WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
-						| WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
-						| WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
-				PixelFormat.TRANSLUCENT);
-		mRootLayoutParams.gravity = Gravity.BOTTOM;
-		mRootLayoutParams.gravity = Gravity.TOP | Gravity.LEFT;
-		mWindowManager.addView(mRootLayout, mRootLayoutParams);
+                WindowManager.LayoutParams.TYPE_SYSTEM_OVERLAY,
+				WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
+						//
 
+		 WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED,
+						//| WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
+				PixelFormat.TRANSLUCENT);*/
+        mRootLayoutParams.gravity = Gravity.CENTER;
 
-		// Post these actions at the end of looper message queue so that the layout is
-		// fully inflated once these functions execute
-		mRootLayout.postDelayed(new Runnable() {
-			@Override
-			public void run() {
+        float dpHeight = displayMetrics.heightPixels;
+        float dpWidth = displayMetrics.widthPixels;
 
-				// Reusable variables
-				RelativeLayout.LayoutParams params;
-				InputStream is;
-				Bitmap bmap;
+        ViewGroup.LayoutParams imageViewLayoutParams = imageView.getLayoutParams();
+        float width = (dpWidth - imageViewLayoutParams.width) / 2f;
+        float height = (dpHeight - imageViewLayoutParams.height) / 2f + getResources().getDimensionPixelSize(R.dimen.vertical_offset);
 
-				// Setup background spotify logo
-				is = getResources().openRawResource(R.drawable.spot_bg);
-				int containerNewWidth = (TRAY_CROP_FRACTION-1)* 300 /TRAY_CROP_FRACTION;
+        Log.d("pos", "lp: w" + width + " h:" + height + "from :" + dpHeight + " " + dpWidth);
+        mRootLayout.setX(width);
+        mRootLayout.setY(height);
+        mWindowManager.addView(mRootLayout, mRootLayoutParams);
+    }
 
-				// Setup background album cover
-				is=null;
-					is =getResources().openRawResource(R.drawable.raw_ad);
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        if (intent.getBooleanExtra("stop_service", false)) {
+            stopSelf();
+        } else {
+            Intent notificationIntent = new Intent(this, AdService.class);
+            notificationIntent.putExtra("stop_service", true);
+            PendingIntent pendingIntent = PendingIntent.getService(this, 0, notificationIntent, 0);
+            Notification notification = new Notification(
+                    R.mipmap.ic_launcher,
+                    "ad service",
+                    System.currentTimeMillis());
+            notification.setLatestEventInfo(
+                    this,
+                    "Advertisment",
+                    "Tap to close the widget.",
+                    pendingIntent);
+            startForeground(86, notification);
+        }
+        return START_STICKY;
+    }
 
-				bmap = Utils.loadMaskedBitmap(is, mAlbumCoverLayout.getHeight(), containerNewWidth);
-				params = (RelativeLayout.LayoutParams) mAlbumCoverLayout.getLayoutParams();
-				params.width = (bmap.getWidth() * mAlbumCoverLayout.getHeight()) / bmap.getHeight();
-				params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT,0);
-				mAlbumCoverLayout.setLayoutParams(params);
-				mAlbumCoverLayout.requestLayout();
-				mAlbumCoverLayout.setBackgroundDrawable(new BitmapDrawable(getResources(), bmap));
+    @Override
+    public void onDestroy() {
 
-
-
-				// Setup the root layout
-				mRootLayoutParams.x = 300;
-				mRootLayoutParams.y = (getApplicationContext().getResources().getDisplayMetrics().heightPixels-mRootLayout.getHeight()) / 2;
-				mWindowManager.updateViewLayout(mRootLayout, mRootLayoutParams);
-
-				// Make everything visible
-				mRootLayout.setVisibility(View.VISIBLE);
-
-				// Animate the Tray
-				mTrayTimerTask = new TrayAnimationTimerTask();
-				mTrayAnimationTimer = new Timer();
-				mTrayAnimationTimer.schedule(mTrayTimerTask, 0, ANIMATION_FRAME_RATE);
-			}
-		}, ANIMATION_FRAME_RATE);
-	}
-
-	// The phone orientation has changed. Update the widget's position.
-	@Override
-	public void onConfigurationChanged(Configuration newConfig) {
-		super.onConfigurationChanged(newConfig);
-		if (mIsTrayOpen)
-			mRootLayoutParams.x = -mRootLayout.getWidth()/TRAY_HIDDEN_FRACTION;
-		else
-			mRootLayoutParams.x = 300 / 2;
-		mRootLayoutParams.y = (getResources().getDisplayMetrics().heightPixels-mRootLayout.getHeight()) / 2;
-		mWindowManager.updateViewLayout(mRootLayout, mRootLayoutParams);
-		animateButtons();
-	}
-
-	@Override
-	public int onStartCommand(Intent intent, int flags, int startId) {
-
-
-		if (intent.getBooleanExtra("stop_service", false)){
-			// If it's a call from the notification, stop the service.
-			stopSelf();
-		}else{
-			// Make the service run in foreground so that the system does not shut it down.
-			Intent notificationIntent = new Intent(this, AdService.class);
-			notificationIntent.putExtra("stop_service", true);
-			PendingIntent pendingIntent = PendingIntent.getService(this, 0, notificationIntent, 0);
-			Notification notification = new Notification(
-					R.mipmap.ic_launcher,
-					"Spotify tray launched",
-					System.currentTimeMillis());
-			notification.setLatestEventInfo(
-					this,
-					"Spotify tray",
-					"Tap to close the widget.",
-					pendingIntent);
-			startForeground(86, notification);
-		}
-		return START_STICKY;
-	}
-
-	// The app is closing.
-	@Override
-	public void onDestroy() {
-
-		if (mRootLayout != null)
-			mWindowManager.removeView(mRootLayout);
-	}
-
-	// Drags the tray as per touch info
-	private void dragTray(int action, int x, int y){
-		switch (action){
-			case MotionEvent.ACTION_DOWN:
-
-				// Cancel any currently running animations/automatic tray movements.
-				if (mTrayTimerTask!=null){
-					mTrayTimerTask.cancel();
-					mTrayAnimationTimer.cancel();
-				}
-
-				// Store the start points
-				mStartDragX = x;
-				//mStartDragY = y;
-				mPrevDragX = x;
-				mPrevDragY = y;
-				break;
-
-			case MotionEvent.ACTION_MOVE:
-
-				// Calculate position of the whole tray according to the drag, and update layout.
-				float deltaX = x-mPrevDragX;
-				float deltaY = y-mPrevDragY;
-				mRootLayoutParams.x += deltaX;
-				mRootLayoutParams.y += deltaY;
-				mPrevDragX = x;
-				mPrevDragY = y;
-				animateButtons();
-				mWindowManager.updateViewLayout(mRootLayout, mRootLayoutParams);
-				break;
-
-			case MotionEvent.ACTION_UP:
-			case MotionEvent.ACTION_CANCEL:
-
-				// When the tray is released, bring it back to "open" or "closed" state.
-				if ((mIsTrayOpen && (x-mStartDragX)<=0) ||
-						(!mIsTrayOpen && (x-mStartDragX)>=0))
-					mIsTrayOpen = !mIsTrayOpen;
-
-				mTrayTimerTask = new TrayAnimationTimerTask();
-				mTrayAnimationTimer = new Timer();
-				mTrayAnimationTimer.schedule(mTrayTimerTask, 0, ANIMATION_FRAME_RATE);
-				break;
-		}
-	}
-
-	// Listens to the touch events on the tray.
-	private class TrayTouchListener implements OnTouchListener {
-		@Override
-		public boolean onTouch(View v, MotionEvent event) {
-
-			final int action = event.getActionMasked();
-
-			switch (action) {
-				case MotionEvent.ACTION_DOWN:
-				case MotionEvent.ACTION_MOVE:
-				case MotionEvent.ACTION_UP:
-				case MotionEvent.ACTION_CANCEL:
-					// Filter and redirect the events to dragTray()
-					dragTray(action, (int)event.getRawX(), (int)event.getRawY());
-					break;
-				default:
-					return false;
-			}
-			return true;
-
-		}
-	}
-
-	// Timer for animation/automatic movement of the tray.
-	private class TrayAnimationTimerTask extends TimerTask{
-
-		// Ultimate destination coordinates toward which the tray will move
-		int mDestX;
-		int mDestY;
-
-		public TrayAnimationTimerTask(){
-
-			// Setup destination coordinates based on the tray state.
-			super();
-			if (!mIsTrayOpen){
-				mDestX = -300;
-			}else{
-				mDestX = -mRootLayout.getWidth()/TRAY_HIDDEN_FRACTION;
-			}
-
-			// Keep upper edge of the widget within the upper limit of screen
-			int screenHeight = getResources().getDisplayMetrics().heightPixels;
-			mDestY = Math.max(
-					screenHeight/TRAY_MOVEMENT_REGION_FRACTION,
-					mRootLayoutParams.y);
-
-			// Keep lower edge of the widget within the lower limit of screen
-			mDestY = Math.min(
-					((TRAY_MOVEMENT_REGION_FRACTION-1)*screenHeight)/TRAY_MOVEMENT_REGION_FRACTION - mRootLayout.getWidth(),
-					mDestY);
-		}
-
-		// This function is called after every frame.
-		@Override
-		public void run() {
-
-			// handler is used to run the function on main UI thread in order to
-			// access the layouts and UI elements.
-			mAnimationHandler.post(new Runnable() {
-				@Override
-				public void run() {
-
-					// Update coordinates of the tray
-					mRootLayoutParams.x = (2*(mRootLayoutParams.x-mDestX))/3 + mDestX;
-					mRootLayoutParams.y = (2*(mRootLayoutParams.y-mDestY))/3 + mDestY;
-					mWindowManager.updateViewLayout(mRootLayout, mRootLayoutParams);
-					animateButtons();
-
-					// Cancel animation when the destination is reached
-					if (Math.abs(mRootLayoutParams.x-mDestX)<2 && Math.abs(mRootLayoutParams.y-mDestY)<2){
-						TrayAnimationTimerTask.this.cancel();
-						mTrayAnimationTimer.cancel();
-					}
-				}
-			});
-		}
-	}
-
-	// This function animates the buttons based on the position of the tray.
-	private void animateButtons(){
-
-		// Animate only if the tray is between open and close state.
-		if (mRootLayoutParams.x < -mRootLayout.getWidth()/TRAY_HIDDEN_FRACTION){
-
-			// Scale the distance between open and close states to 0-1.
-			float relativeDistance = (mRootLayoutParams.x + 300)/(float)
-					(-mRootLayout.getWidth()/TRAY_HIDDEN_FRACTION + 300);
-
-			// Limit it to 0-1 if it goes beyond 0-1 for any reason.
-			relativeDistance=Math.max(relativeDistance, 0);
-			relativeDistance=Math.min(relativeDistance, 1);
-
-			// Setup animations
-			AnimationSet animations = new AnimationSet(true);
-			animations.setFillAfter(true);
-			Animation animationAlpha = new AlphaAnimation(
-					relativeDistance,
-					relativeDistance);
-			animations.addAnimation(animationAlpha);
-
-			Animation animationScale = new ScaleAnimation(
-					relativeDistance,
-					relativeDistance,
-					relativeDistance,
-					relativeDistance);
-			animations.addAnimation(animationScale);
-
-			// Play the animations
-			mAlbumCoverLayout.startAnimation(animationAlpha);
-		}else{
-
-			// Clear all animations if the tray is being dragged - that is, when it is beyond the
-			// normal open state.
-
-			mAlbumCoverLayout.clearAnimation();
-		}
-	}
-
-
-
-
+        if (mRootLayout != null)
+            mWindowManager.removeView(mRootLayout);
+    }
 
 
 }
