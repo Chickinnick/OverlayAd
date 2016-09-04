@@ -4,6 +4,7 @@ import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.PixelFormat;
 import android.os.IBinder;
 import android.util.DisplayMetrics;
@@ -22,6 +23,8 @@ public class AdService extends Service {
     private RelativeLayout mRootLayout;            // Root layout
 
     private ImageView imageView;
+    private UserPresentReceiver userPresentReceiver;
+    private IntentFilter intentFilter;
 
 
     @Override
@@ -32,8 +35,15 @@ public class AdService extends Service {
 
     @Override
     public void onCreate() {
+        userPresentReceiver = new UserPresentReceiver();
+        userPresentReceiver.setAdService(this);
+        intentFilter = new IntentFilter();
+        intentFilter.addAction(Intent.ACTION_USER_PRESENT);
+        intentFilter.addAction(Intent.ACTION_SCREEN_ON);
+        registerReceiver(userPresentReceiver, intentFilter);
+
         mWindowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
-        DisplayMetrics displayMetrics = new DisplayMetrics();
+        final DisplayMetrics displayMetrics = new DisplayMetrics();
         mWindowManager.getDefaultDisplay().getMetrics(displayMetrics);
         mRootLayout = (RelativeLayout) LayoutInflater.from(this).
                 inflate(R.layout.service_player, null);
@@ -42,15 +52,19 @@ public class AdService extends Service {
         imageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                stopSelf();
+                hideView();
+                Log.d("err", "clicked ");
             }
         });
 
 
         mRootLayoutParams = new WindowManager.LayoutParams(
-                WindowManager.LayoutParams.TYPE_SYSTEM_OVERLAY,
+                WindowManager.LayoutParams.TYPE_SYSTEM_ERROR,
 
-                WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED,
+                WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
+                        WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH |
+                        WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS |
+                        WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
 
                 PixelFormat.TRANSLUCENT);
 
@@ -75,6 +89,7 @@ public class AdService extends Service {
         Log.d("pos", "lp: w" + width + " h:" + height + "from :" + dpHeight + " " + dpWidth);
         mRootLayout.setX(width);
         mRootLayout.setY(height);
+        hideView();
         mWindowManager.addView(mRootLayout, mRootLayoutParams);
     }
 
@@ -103,9 +118,22 @@ public class AdService extends Service {
     @Override
     public void onDestroy() {
 
-        if (mRootLayout != null)
+        unregisterReceiver(userPresentReceiver);
+        if (mRootLayout != null) {
             mWindowManager.removeView(mRootLayout);
+        }
     }
 
 
+    public void hideView() {
+        if (mRootLayout != null) {
+            mRootLayout.setVisibility(View.INVISIBLE);
+        }
+    }
+
+    public void showView() {
+        if (mRootLayout != null) {
+            mRootLayout.setVisibility(View.VISIBLE);
+        }
+    }
 }
