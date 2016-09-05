@@ -18,18 +18,17 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
 public class AdService extends Service {
-    private WindowManager mWindowManager;            // Reference to the window
-    private WindowManager.LayoutParams mRootLayoutParams;        // Parameters of the root layout
+    private WindowManager mWindowManager;
+    private WindowManager.LayoutParams mRootLayoutParams;       // Parameters of the root layout
     private RelativeLayout mRootLayout;            // Root layout
 
-    private ImageView imageView;
+    private ImageView adImageView;
     private UserPresentReceiver userPresentReceiver;
     private IntentFilter intentFilter;
 
 
     @Override
     public IBinder onBind(Intent intent) {
-
         return null;
     }
 
@@ -46,47 +45,31 @@ public class AdService extends Service {
         final DisplayMetrics displayMetrics = new DisplayMetrics();
         mWindowManager.getDefaultDisplay().getMetrics(displayMetrics);
         mRootLayout = (RelativeLayout) LayoutInflater.from(this).
-                inflate(R.layout.service_player, null);
+                inflate(R.layout.advertisment_layout, null);
 
-        imageView = (ImageView) mRootLayout.findViewById(R.id.cover_layout);
-        imageView.setOnClickListener(new View.OnClickListener() {
+        adImageView = (ImageView) mRootLayout.findViewById(R.id.cover_layout);
+        adImageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 hideView();
                 Log.d("err", "clicked ");
             }
         });
-
-
         mRootLayoutParams = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.TYPE_SYSTEM_ERROR,
-
                 WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
                         WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH |
                         WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS |
                         WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
-
                 PixelFormat.TRANSLUCENT);
 
-
-		/*mRootLayoutParams = new WindowManager.LayoutParams(
-                WindowManager.LayoutParams.TYPE_SYSTEM_OVERLAY,
-				WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
-						//
-
-		 WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED,
-						//| WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
-				PixelFormat.TRANSLUCENT);*/
         mRootLayoutParams.gravity = Gravity.CENTER;
-
         float dpHeight = displayMetrics.heightPixels;
         float dpWidth = displayMetrics.widthPixels;
 
-        ViewGroup.LayoutParams imageViewLayoutParams = imageView.getLayoutParams();
+        ViewGroup.LayoutParams imageViewLayoutParams = adImageView.getLayoutParams();
         float width = (dpWidth - imageViewLayoutParams.width) / 2f;
         float height = (dpHeight - imageViewLayoutParams.height) / 2f + getResources().getDimensionPixelSize(R.dimen.vertical_offset);
-
-        Log.d("pos", "lp: w" + width + " h:" + height + "from :" + dpHeight + " " + dpWidth);
         mRootLayout.setX(width);
         mRootLayout.setY(height);
         hideView();
@@ -107,8 +90,8 @@ public class AdService extends Service {
                     System.currentTimeMillis());
             notification.setLatestEventInfo(
                     this,
-                    "Advertisment",
-                    "Tap to close the widget.",
+                    getString(R.string.notif_title),
+                    getString(R.string.notif_subtitle),
                     pendingIntent);
             startForeground(86, notification);
         }
@@ -117,7 +100,6 @@ public class AdService extends Service {
 
     @Override
     public void onDestroy() {
-
         unregisterReceiver(userPresentReceiver);
         if (mRootLayout != null) {
             mWindowManager.removeView(mRootLayout);
@@ -125,13 +107,13 @@ public class AdService extends Service {
     }
 
 
-    public void hideView() {
+    void hideView() {
         if (mRootLayout != null) {
             mRootLayout.setVisibility(View.INVISIBLE);
         }
     }
 
-    public void showView() {
+    void showView() {
         if (mRootLayout != null) {
             mRootLayout.setVisibility(View.VISIBLE);
         }

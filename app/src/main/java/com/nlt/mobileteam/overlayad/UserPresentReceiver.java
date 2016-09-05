@@ -9,7 +9,7 @@ public class UserPresentReceiver extends BroadcastReceiver {
 
     private AdService adService;
 
-    public UserPresentReceiver() {
+    UserPresentReceiver() {
     }
 
 
@@ -26,7 +26,7 @@ public class UserPresentReceiver extends BroadcastReceiver {
         }
     }
 
-    public void setAdService(AdService adService) {
+    void setAdService(AdService adService) {
         this.adService = adService;
     }
 }

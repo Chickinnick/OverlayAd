@@ -2,4 +2,6 @@
 <resources>
     <dimen name="image_w">300dp</dimen>
     <dimen name="image_h">240dp</dimen>
+    <dimen name="vertical_offset">50dp</dimen>
+
 </resources>
