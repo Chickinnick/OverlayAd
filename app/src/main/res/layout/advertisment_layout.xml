@@ -1,16 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/root_layout"
-	android:layout_width="match_parent"
-	android:layout_height="match_parent">
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
 
-	<ImageView
-		android:scaleType="centerInside"
-		android:src="@drawable/raw_ad"
-	        android:id="@+id/cover_layout"
-		android:layout_width="@dimen/image_w"
-		android:layout_height="@dimen/image_h" />
+    <WebView
+        android:id="@+id/cover_layout"
+        android:layout_width="@dimen/image_w"
+        android:layout_height="@dimen/image_h" />
 
 
 </RelativeLayout>

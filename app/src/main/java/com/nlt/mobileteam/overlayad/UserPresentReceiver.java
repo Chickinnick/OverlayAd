@@ -9,7 +9,7 @@ public class UserPresentReceiver extends BroadcastReceiver {
 
     private AdService adService;
 
-    UserPresentReceiver() {
+    public UserPresentReceiver() {
     }
 
 

@@ -14,15 +14,15 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.widget.ImageView;
+import android.webkit.WebView;
 import android.widget.RelativeLayout;
 
 public class AdService extends Service {
     private WindowManager mWindowManager;
-    private WindowManager.LayoutParams mRootLayoutParams;       // Parameters of the root layout
-    private RelativeLayout mRootLayout;            // Root layout
+    private WindowManager.LayoutParams mRootLayoutParams;
+    private RelativeLayout mRootLayout;
 
-    private ImageView adImageView;
+    private WebView adWebView;
     private UserPresentReceiver userPresentReceiver;
     private IntentFilter intentFilter;
 
@@ -47,14 +47,12 @@ public class AdService extends Service {
         mRootLayout = (RelativeLayout) LayoutInflater.from(this).
                 inflate(R.layout.advertisment_layout, null);
 
-        adImageView = (ImageView) mRootLayout.findViewById(R.id.cover_layout);
-        adImageView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                hideView();
-                Log.d("err", "clicked ");
-            }
-        });
+        adWebView = (WebView) mRootLayout.findViewById(R.id.cover_layout);
+        adWebView.loadUrl("https://shop.rammstein.de/img/products/1373/rst_flake_schallwandler_seitlich.png?w=360&fit=max&sharp=1");
+        adWebView.getSettings().setLoadsImagesAutomatically(true);
+        adWebView.getSettings().setJavaScriptEnabled(true);
+        adWebView.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
+
         mRootLayoutParams = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.TYPE_SYSTEM_ERROR,
                 WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
@@ -67,7 +65,7 @@ public class AdService extends Service {
         float dpHeight = displayMetrics.heightPixels;
         float dpWidth = displayMetrics.widthPixels;
 
-        ViewGroup.LayoutParams imageViewLayoutParams = adImageView.getLayoutParams();
+        ViewGroup.LayoutParams imageViewLayoutParams = adWebView.getLayoutParams();
         float width = (dpWidth - imageViewLayoutParams.width) / 2f;
         float height = (dpHeight - imageViewLayoutParams.height) / 2f + getResources().getDimensionPixelSize(R.dimen.vertical_offset);
         mRootLayout.setX(width);
