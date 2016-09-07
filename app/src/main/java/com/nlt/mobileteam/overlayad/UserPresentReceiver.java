@@ -7,7 +7,7 @@ import android.content.Intent;
 public class UserPresentReceiver extends BroadcastReceiver {
 
 
-    private AdService adService;
+    private SampleOverlayService adService;
 
     public UserPresentReceiver() {
     }
@@ -26,7 +26,7 @@ public class UserPresentReceiver extends BroadcastReceiver {
         }
     }
 
-    void setAdService(AdService adService) {
+    void setAdService(SampleOverlayService adService) {
         this.adService = adService;
     }
 }

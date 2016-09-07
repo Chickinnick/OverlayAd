@@ -35,7 +35,7 @@ public class AdService extends Service {
     @Override
     public void onCreate() {
         userPresentReceiver = new UserPresentReceiver();
-        userPresentReceiver.setAdService(this);
+       // userPresentReceiver.setAdService(this);
         intentFilter = new IntentFilter();
         intentFilter.addAction(Intent.ACTION_USER_PRESENT);
         intentFilter.addAction(Intent.ACTION_SCREEN_ON);
@@ -56,7 +56,7 @@ public class AdService extends Service {
         mRootLayoutParams = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.TYPE_SYSTEM_ERROR,
                 WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
-                        WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH |
+                        WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
                         WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS |
                         WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
                 PixelFormat.TRANSLUCENT);

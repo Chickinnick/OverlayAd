@@ -21,6 +21,8 @@
 
         <service android:name=".AdService" />
 
+        <service android:name=".SampleOverlayService" />
+
         <receiver
             android:name=".UserPresentReceiver"
             android:enabled="true"
